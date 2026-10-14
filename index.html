@@ -4,108 +4,443 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pierri Finance AI</title>
-  
-  <!-- Configurações PWA -->
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#020617">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="PierriAI">
-  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/9181/9181081.png">
-
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Supabase JS Client v2 -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            brand: { 50: '#ecfdf5', 500: '#10b981', 600: '#059669', 900: '#064e3b' }
-          }
-        }
-      }
-    }
-  </script>
-  <style>
-    ::-webkit-scrollbar { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-track { background: #090d16; }
-    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 9999px; }
-  </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col antialiased selection:bg-emerald-500 selection:text-slate-950">
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col">
 
-  <!-- Barra Superior -->
-  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-30 px-4 py-3">
+  <!-- Topbar -->
+  <header class="border-b border-slate-800 bg-slate-900/80 sticky top-0 z-30 px-4 py-3">
     <div class="max-w-7xl mx-auto flex justify-between items-center gap-2">
-      
-      <!-- Logótipo e Estado -->
-      <div class="flex items-center gap-2.5">
-        <div class="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
-          <i data-lucide="sparkles" class="w-5 h-5"></i>
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold">
+          P
         </div>
         <div>
           <div class="flex items-center gap-1.5">
-            <h1 class="text-sm md:text-base font-bold text-white tracking-tight">Pierri<span class="text-emerald-400">AI</span></h1>
-            <span id="auth-status-badge" class="text-[9px] bg-slate-800 text-slate-400 border border-slate-700 px-1.5 py-0.5 rounded-full flex items-center gap-1 font-medium">
-              <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Modo Local
+            <h1 class="text-sm font-bold text-white">Pierri<span class="text-emerald-400">AI</span></h1>
+            <span id="auth-status-badge" class="text-[9px] bg-slate-800 text-slate-400 border border-slate-700 px-1.5 py-0.5 rounded-full">
+              Local
             </span>
           </div>
-          <p id="user-display-email" class="text-[11px] text-slate-400 truncate max-w-[150px] sm:max-w-xs">Modo local</p>
+          <p id="user-display-email" class="text-[10px] text-slate-400 truncate max-w-[150px]">Modo Local</p>
         </div>
       </div>
-      
-      <!-- Ações -->
       <div class="flex items-center gap-1.5">
-        <button id="tts-toggle-btn" onclick="toggleSpeechSynthesis()" title="Leitura de Respostas por Voz" class="p-2 text-slate-400 hover:text-white bg-slate-800/80 border border-slate-700 rounded-xl transition-all">
-          <i data-lucide="volume-2" id="tts-icon" class="w-4 h-4 text-emerald-400"></i>
+        <button onclick="toggleConfigModal()" class="text-xs text-slate-300 bg-slate-800 border border-slate-700 px-2.5 py-1.5 rounded-lg">
+          Config
         </button>
-
-        <button onclick="toggleConfigModal()" title="Configurar Base de Dados" class="p-2 text-slate-400 hover:text-white bg-slate-800/80 border border-slate-700 rounded-xl transition-all">
-          <i data-lucide="database" class="w-4 h-4 text-emerald-400"></i>
-        </button>
-
-        <button onclick="exportCSV()" title="Exportar CSV" class="p-2 text-slate-400 hover:text-white bg-slate-800/80 border border-slate-700 rounded-xl transition-all">
-          <i data-lucide="download" class="w-4 h-4"></i>
-        </button>
-
-        <button id="auth-main-btn" onclick="openAuthModal()" class="flex items-center gap-1 text-xs bg-emerald-500 text-slate-950 font-bold px-3 py-2 rounded-xl hover:bg-emerald-400 transition-colors">
-          <i data-lucide="log-in" class="w-3.5 h-3.5"></i>
-          <span>Entrar</span>
+        <button id="auth-main-btn" onclick="openAuthModal()" class="text-xs bg-emerald-500 text-slate-950 font-bold px-3 py-1.5 rounded-lg">
+          Entrar
         </button>
       </div>
     </div>
   </header>
 
-  <!-- Modal de Autenticação -->
-  <div id="auth-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-5 shadow-2xl space-y-4">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <div class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center justify-center">
-            <i data-lucide="shield-check" class="w-4 h-4"></i>
-          </div>
-          <h3 id="auth-modal-title" class="text-sm font-bold text-white">Aceder à Conta</h3>
+  <!-- Modal Config Supabase -->
+  <div id="config-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-4 space-y-3">
+      <h3 class="text-sm font-bold text-white">Supabase URL & Key</h3>
+      <input id="input-supabase-url" type="text" placeholder="Project URL" class="w-full bg-slate-950 border border-slate-750 rounded-xl px-3 py-2 text-xs text-white">
+      <input id="input-supabase-key" type="password" placeholder="Anon Key" class="w-full bg-slate-950 border border-slate-750 rounded-xl px-3 py-2 text-xs text-white">
+      <div class="flex justify-end gap-2 pt-1">
+        <button onclick="toggleConfigModal()" class="text-xs text-slate-400 px-3 py-1.5">Cancelar</button>
+        <button onclick="saveSupabaseConfig()" class="text-xs bg-emerald-500 text-slate-950 font-bold px-3 py-1.5 rounded-xl">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Auth -->
+  <div id="auth-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-4 space-y-3">
+      <div class="flex justify-between items-center">
+        <h3 id="auth-modal-title" class="text-sm font-bold text-white">Entrar</h3>
+        <button onclick="closeAuthModal()" class="text-slate-400 text-xs">✕</button>
+      </div>
+      <div class="flex border-b border-slate-800 text-xs">
+        <button id="tab-login" onclick="switchAuthTab('login')" class="flex-1 pb-1 text-emerald-400 border-b-2 border-emerald-500 font-bold">Entrar</button>
+        <button id="tab-signup" onclick="switchAuthTab('signup')" class="flex-1 pb-1 text-slate-400 font-bold">Criar Conta</button>
+      </div>
+      <form onsubmit="handleAuthSubmit(event)" class="space-y-2">
+        <input id="auth-email" type="email" required placeholder="E-mail" class="w-full bg-slate-950 border border-slate-750 rounded-xl px-3 py-2 text-xs text-white">
+        <input id="auth-password" type="password" required minlength="6" placeholder="Palavra-passe (min 6)" class="w-full bg-slate-950 border border-slate-750 rounded-xl px-3 py-2 text-xs text-white">
+        <button id="auth-submit-btn" type="submit" class="w-full py-2 bg-emerald-500 text-slate-950 font-bold text-xs rounded-xl mt-1">Confirmar</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Conteúdo Principal -->
+  <main class="max-w-7xl mx-auto w-full p-3 grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1">
+    
+    <!-- Painel Dashboard (7 cols) -->
+    <section class="lg:col-span-7 flex flex-col gap-3">
+      <div class="grid grid-cols-3 gap-2">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3">
+          <span class="text-[10px] text-slate-400 block">Saldo</span>
+          <span id="total-balance" class="text-base font-bold text-white block mt-0.5">R$ 0,00</span>
         </div>
-        <button onclick="closeAuthModal()" class="text-slate-400 hover:text-white">
-          <i data-lucide="x" class="w-4 h-4"></i>
-        </button>
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3">
+          <span class="text-[10px] text-emerald-400 block">Entradas</span>
+          <span id="total-income" class="text-sm font-bold text-emerald-400 block mt-0.5">R$ 0,00</span>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3">
+          <span class="text-[10px] text-rose-400 block">Saídas</span>
+          <span id="total-expense" class="text-sm font-bold text-rose-400 block mt-0.5">R$ 0,00</span>
+        </div>
       </div>
 
-      <div class="flex border-b border-slate-800 text-xs font-semibold">
-        <button id="tab-login" onclick="switchAuthTab('login')" class="flex-1 pb-2 text-emerald-400 border-b-2 border-emerald-500">Entrar</button>
-        <button id="tab-signup" onclick="switchAuthTab('signup')" class="flex-1 pb-2 text-slate-400 hover:text-slate-200">Criar Conta</button>
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-3">
+        <h2 class="text-xs font-semibold text-slate-300 mb-2">Despesas por Categoria</h2>
+        <div class="h-40 flex items-center justify-center">
+          <canvas id="expensesChart"></canvas>
+        </div>
       </div>
 
-      <div id="auth-alert" class="hidden text-xs p-2.5 rounded-xl border"></div>
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 flex-1 flex flex-col">
+        <div class="flex justify-between items-center mb-2">
+          <h2 class="text-xs font-semibold text-slate-300">Extrato Recente</h2>
+          <button onclick="clearAllTransactions()" class="text-[10px] text-slate-500 hover:text-rose-400">Limpar</button>
+        </div>
+        <div id="transactions-list" class="space-y-1.5 overflow-y-auto max-h-48 pr-1 flex-1"></div>
+      </div>
+    </section>
 
-      <form id="auth-form" onsubmit="handleAuthSubmit(event)" class="space-y-3">
-        <div>
-          <label class="text-xs font-medium text-slate-300 block
-            
+    <!-- Painel Chat / Copiloto (5 cols) -->
+    <section class="lg:col-span-5 flex flex-col bg-slate-900 border border-slate-800 rounded-xl overflow-hidden h-[420px] lg:h-auto">
+      <div class="p-3 border-b border-slate-800 bg-slate-950/60 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+          <span class="text-xs font-bold text-white">Copiloto Financeiro</span>
+        </div>
+        <span id="mic-status" class="hidden text-[10px] text-rose-400 font-bold animate-pulse">● A Ouvir...</span>
+      </div>
+
+      <div id="chat-messages" class="flex-1 p-3 overflow-y-auto space-y-2 text-xs">
+        <div class="bg-slate-800 rounded-xl p-2.5 text-slate-200">
+          Olá! Escreva ou dite as suas despesas. Exemplo: <b>"Gastei 45 no almoço"</b> ou <b>"Recebi 1200"</b>.
+        </div>
+      </div>
+
+      <div class="p-2 border-t border-slate-800 bg-slate-950">
+        <form onsubmit="handleChatSubmit(event)" class="flex gap-1.5 items-center">
+          <button id="mic-btn" type="button" onclick="toggleSpeechRecognition()" class="p-2 bg-slate-800 hover:bg-slate-750 text-slate-300 rounded-xl border border-slate-700 text-xs">
+            🎤
+          </button>
+          <input id="chat-input" type="text" placeholder="Fale ou digite..." autocomplete="off" class="flex-1 bg-slate-900 border border-slate-750 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+          <button type="submit" class="px-3 py-2 bg-emerald-500 text-slate-950 font-bold rounded-xl text-xs">
+            Enviar
+          </button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    let supabaseClient = null;
+    let currentUser = null;
+    let authMode = 'login';
+    let transactions = [];
+    let chartInstance = null;
+
+    const DEFAULT_DATA = [
+      { id: 1, description: 'Salário', amount: 3000, type: 'income', category: 'Renda', date: 'Hoje' },
+      { id: 2, description: 'Supermercado', amount: 250, type: 'expense', category: 'Mercado', date: 'Ontem' },
+      { id: 3, description: 'Combustível', amount: 100, type: 'expense', category: 'Transporte', date: '11/10' }
+    ];
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      initChart();
+      await setupSupabaseAndAuth();
+      initSpeech();
+      if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
+    });
+
+    async function setupSupabaseAndAuth() {
+      const url = localStorage.getItem('pierri_sb_url');
+      const key = localStorage.getItem('pierri_sb_key');
+      if (url && key) {
+        try {
+          supabaseClient = window.supabase.createClient(url, key);
+          supabaseClient.auth.onAuthStateChange(async (e, session) => {
+            currentUser = session?.user || null;
+            updateAuthUI();
+            await loadTransactions();
+          });
+          const { data: { session } } = await supabaseClient.auth.getSession();
+          currentUser = session?.user || null;
+        } catch (err) {}
+      }
+      updateAuthUI();
+      await loadTransactions();
+    }
+
+    function updateAuthUI() {
+      const badge = document.getElementById('auth-status-badge');
+      const email = document.getElementById('user-display-email');
+      const btn = document.getElementById('auth-main-btn');
+      if (currentUser) {
+        badge.textContent = 'Nuvem';
+        badge.className = 'text-[9px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded-full';
+        email.textContent = currentUser.email;
+        btn.textContent = 'Sair';
+        btn.onclick = async () => {
+          if (supabaseClient) await supabaseClient.auth.signOut();
+          currentUser = null;
+          updateAuthUI();
+          await loadTransactions();
+        };
+      } else {
+        badge.textContent = 'Local';
+        badge.className = 'text-[9px] bg-slate-800 text-slate-400 border border-slate-700 px-1.5 py-0.5 rounded-full';
+        email.textContent = 'Modo Local';
+        btn.textContent = 'Entrar';
+        btn.onclick = openAuthModal;
+      }
+    }
+
+    function toggleConfigModal() {
+      document.getElementById('config-modal').classList.toggle('hidden');
+      document.getElementById('input-supabase-url').value = localStorage.getItem('pierri_sb_url') || '';
+      document.getElementById('input-supabase-key').value = localStorage.getItem('pierri_sb_key') || '';
+    }
+
+    function saveSupabaseConfig() {
+      const url = document.getElementById('input-supabase-url').value.trim();
+      const key = document.getElementById('input-supabase-key').value.trim();
+      if (url && key) {
+        localStorage.setItem('pierri_sb_url', url);
+        localStorage.setItem('pierri_sb_key', key);
+      }
+      toggleConfigModal();
+      location.reload();
+    }
+
+    function openAuthModal() {
+      if (!supabaseClient) {
+        alert('Configure o URL e Chave do Supabase primeiro em Config.');
+        toggleConfigModal();
+        return;
+      }
+      document.getElementById('auth-modal').classList.remove('hidden');
+    }
+
+    function closeAuthModal() { document.getElementById('auth-modal').classList.add('hidden'); }
+
+    function switchAuthTab(mode) {
+      authMode = mode;
+      document.getElementById('tab-login').className = mode === 'login' ? 'flex-1 pb-1 text-emerald-400 border-b-2 border-emerald-500 font-bold' : 'flex-1 pb-1 text-slate-400 font-bold';
+      document.getElementById('tab-signup').className = mode === 'signup' ? 'flex-1 pb-1 text-emerald-400 border-b-2 border-emerald-500 font-bold' : 'flex-1 pb-1 text-slate-400 font-bold';
+      document.getElementById('auth-modal-title').textContent = mode === 'login' ? 'Entrar' : 'Criar Conta';
+    }
+
+    async function handleAuthSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('auth-email').value.trim();
+      const password = document.getElementById('auth-password').value;
+      const btn = document.getElementById('auth-submit-btn');
+      btn.disabled = true;
+      try {
+        if (authMode === 'login') {
+          const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+          if (error) throw error;
+          closeAuthModal();
+        } else {
+          const { error } = await supabaseClient.auth.signUp({ email, password });
+          if (error) throw error;
+          alert('Conta criada com sucesso!');
+          closeAuthModal();
+        }
+      } catch (err) { alert(err.message); }
+      btn.disabled = false;
+    }
+
+    async function loadTransactions() {
+      if (supabaseClient && currentUser) {
+        try {
+          const { data } = await supabaseClient.from('transactions').select('*').order('id', { ascending: true });
+          transactions = data || [];
+        } catch { transactions = []; }
+      } else {
+        transactions = JSON.parse(localStorage.getItem('pierri_tx')) || DEFAULT_DATA;
+      }
+      updateDashboard();
+      updateChart();
+    }
+
+    async function addTransaction(tx) {
+      if (supabaseClient && currentUser) {
+        try {
+          const { data, error } = await supabaseClient.from('transactions').insert([{
+            description: tx.description,
+            amount: tx.amount,
+            type: tx.type,
+            category: tx.category,
+            date: 'Hoje'
+          }]).select();
+          if (!error && data) transactions.push(data[0]);
+          else transactions.push({ ...tx, id: Date.now() });
+        } catch { transactions.push({ ...tx, id: Date.now() }); }
+      } else {
+        transactions.push({ ...tx, id: Date.now() });
+        localStorage.setItem('pierri_tx', JSON.stringify(transactions));
+      }
+      updateDashboard();
+      updateChart();
+    }
+
+    function deleteTransaction(id) {
+      if (confirm('Eliminar lançamento?')) {
+        if (supabaseClient && currentUser) supabaseClient.from('transactions').delete().eq('id', id).then();
+        transactions = transactions.filter(t => t.id !== id);
+        if (!currentUser) localStorage.setItem('pierri_tx', JSON.stringify(transactions));
+        updateDashboard();
+        updateChart();
+      }
+    }
+
+    function clearAllTransactions() {
+      if (confirm('Limpar todas as transações?')) {
+        if (supabaseClient && currentUser) supabaseClient.from('transactions').delete().neq('id', 0).then();
+        transactions = [];
+        localStorage.removeItem('pierri_tx');
+        updateDashboard();
+        updateChart();
+      }
+    }
+
+    function formatBRL(v) {
+      return (Number(v) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function updateDashboard() {
+      const inc = transactions.filter(t => t.type === 'income').reduce((a, t) => a + Number(t.amount), 0);
+      const exp = transactions.filter(t => t.type === 'expense').reduce((a, t) => a + Number(t.amount), 0);
+      document.getElementById('total-balance').textContent = formatBRL(inc - exp);
+      document.getElementById('total-income').textContent = formatBRL(inc);
+      document.getElementById('total-expense').textContent = formatBRL(exp);
+
+      const list = document.getElementById('transactions-list');
+      list.innerHTML = '';
+      if (!transactions.length) {
+        list.innerHTML = '<p class="text-center text-[10px] text-slate-500 py-4">Sem registos.</p>';
+        return;
+      }
+      transactions.slice().reverse().forEach(t => {
+        const item = document.createElement('div');
+        item.className = 'flex items-center justify-between p-2 rounded-lg bg-slate-950 border border-slate-800 text-xs';
+        item.innerHTML = `
+          <div>
+            <p class="font-bold text-white">${t.description}</p>
+            <p class="text-[10px] text-slate-400">${t.category} • ${t.date || 'Hoje'}</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="font-bold ${t.type === 'income' ? 'text-emerald-400' : 'text-rose-400'}">
+              ${t.type === 'income' ? '+' : '-'} ${formatBRL(t.amount)}
+            </span>
+            <button onclick="deleteTransaction(${t.id})" class="text-slate-500 hover:text-rose-400">✕</button>
+          </div>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    function initChart() {
+      const ctx = document.getElementById('expensesChart').getContext('2d');
+      const dataMap = getCategoryData();
+      chartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(dataMap),
+          datasets: [{ data: Object.values(dataMap), backgroundColor: ['#10b981', '#f43f5e', '#3b82f6', '#f59e0b', '#8b5cf6'], borderWidth: 0 }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'right', labels: { boxWidth: 8, color: '#94a3b8', font: { size: 9 } } } },
+          cutout: '70%'
+        }
+      });
+    }
+
+    function getCategoryData() {
+      const exp = transactions.filter(t => t.type === 'expense');
+      const g = {};
+      exp.forEach(t => { g[t.category] = (g[t.category] || 0) + Number(t.amount); });
+      return Object.keys(g).length ? g : { 'Sem gastos': 1 };
+    }
+
+    function updateChart() {
+      if (!chartInstance) return;
+      const d = getCategoryData();
+      chartInstance.data.labels = Object.keys(d);
+      chartInstance.data.datasets[0].data = Object.values(d);
+      chartInstance.update();
+    }
+
+    let recognition = null;
+    let isListening = false;
+    function initSpeech() {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) return;
+      recognition = new SR();
+      recognition.lang = 'pt-BR';
+      recognition.onstart = () => {
+        isListening = true;
+        document.getElementById('mic-status').classList.remove('hidden');
+      };
+      recognition.onend = () => {
+        isListening = false;
+        document.getElementById('mic-status').classList.add('hidden');
+      };
+      recognition.onresult = (e) => {
+        const text = e.results[0][0].transcript;
+        if (text) handleUserMessage(text);
+      };
+    }
+
+    function toggleSpeechRecognition() {
+      if (!recognition) return alert('Navegador sem suporte a voz.');
+      if (isListening) recognition.stop();
+      else recognition.start();
+    }
+
+    function parseNLP(text) {
+      const match = text.match(/(\d+(?:[.,]\d{1,2})?)/);
+      if (!match) return null;
+      const amount = parseFloat(match[1].replace(',', '.'));
+      const isInc = /(ganhei|recebi|salario|salário|vendi|entrada|renda|freela)/i.test(text);
+      let cat = 'Geral';
+      if (/(almoço|jantar|lanche|restaurante|ifood|cafe|café|comida)/i.test(text)) cat = 'Alimentação';
+      else if (/(mercado|supermercado|feira)/i.test(text)) cat = 'Mercado';
+      else if (/(gasolina|uber|posto|transporte)/i.test(text)) cat = 'Transporte';
+      else if (isInc) cat = 'Renda';
+      return {
+        amount,
+        type: isInc ? 'income' : 'expense',
+        category: cat,
+        description: cat
+      };
+    }
+
+    async function handleUserMessage(text) {
+      appendChatMessage(text, 'user');
+      const parsed = parseNLP(text);
+      if (!parsed) {
+        appendChatMessage('Não identifiquei o valor. Diga algo como: "Gastei 45 no almoço".', 'bot');
+        return;
+      }
+      await addTransaction({ ...parsed, date: 'Hoje' });
+      appendChatMessage(`✓ Registado: ${parsed.category} - ${formatBRL(parsed.amount)}`, 'bot');
+    }
+
+    function handleChatSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById('chat-input');
+      const val = input.value.trim();
+      if (!val) return;
+      input.value = '';
+      handleUserMessag
