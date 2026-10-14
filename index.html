@@ -3,444 +3,169 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pierri Finance AI</title>
-  <link rel="manifest" href="./manifest.json">
-  <meta name="theme-color" content="#020617">
+  <title>Pierri AI</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col">
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans p-3 pb-10">
 
-  <!-- Topbar -->
-  <header class="border-b border-slate-800 bg-slate-900/80 sticky top-0 z-30 px-4 py-3">
-    <div class="max-w-7xl mx-auto flex justify-between items-center gap-2">
-      <div class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold">
-          P
-        </div>
-        <div>
-          <div class="flex items-center gap-1.5">
-            <h1 class="text-sm font-bold text-white">Pierri<span class="text-emerald-400">AI</span></h1>
-            <span id="auth-status-badge" class="text-[9px] bg-slate-800 text-slate-400 border border-slate-700 px-1.5 py-0.5 rounded-full">
-              Local
-            </span>
-          </div>
-          <p id="user-display-email" class="text-[10px] text-slate-400 truncate max-w-[150px]">Modo Local</p>
-        </div>
+  <header class="max-w-xl mx-auto bg-slate-900 border border-slate-800 rounded-2xl p-3 mb-3 flex justify-between items-center">
+    <div class="flex items-center gap-2">
+      <div class="w-8 h-8 rounded-xl bg-emerald-500 text-slate-950 flex items-center justify-center font-bold">P</div>
+      <div>
+        <h1 class="text-sm font-bold">Pierri<span class="text-emerald-400">AI</span> <span id="badge" class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">Ativo</span></h1>
+        <p class="text-[10px] text-slate-400">Copiloto Financeiro</p>
       </div>
-      <div class="flex items-center gap-1.5">
-        <button onclick="toggleConfigModal()" class="text-xs text-slate-300 bg-slate-800 border border-slate-700 px-2.5 py-1.5 rounded-lg">
-          Config
-        </button>
-        <button id="auth-main-btn" onclick="openAuthModal()" class="text-xs bg-emerald-500 text-slate-950 font-bold px-3 py-1.5 rounded-lg">
-          Entrar
-        </button>
-      </div>
+    </div>
+    <div class="flex gap-1.5">
+      <button type="button" onclick="configSB()" class="text-xs bg-slate-800 border border-slate-700 px-2.5 py-1.5 rounded-xl">☁️ Nuvem</button>
+      <button type="button" onclick="clearTx()" class="text-xs bg-rose-500/20 text-rose-400 px-2.5 py-1.5 rounded-xl">Limpar</button>
     </div>
   </header>
 
-  <!-- Modal Config Supabase -->
-  <div id="config-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-4 space-y-3">
-      <h3 class="text-sm font-bold text-white">Supabase URL & Key</h3>
-      <input id="input-supabase-url" type="text" placeholder="Project URL" class="w-full bg-slate-950 border border-slate-750 rounded-xl px-3 py-2 text-xs text-white">
-      <input id="input-supabase-key" type="password" placeholder="Anon Key" class="w-full bg-slate-950 border border-slate-750 rounded-xl px-3 py-2 text-xs text-white">
-      <div class="flex justify-end gap-2 pt-1">
-        <button onclick="toggleConfigModal()" class="text-xs text-slate-400 px-3 py-1.5">Cancelar</button>
-        <button onclick="saveSupabaseConfig()" class="text-xs bg-emerald-500 text-slate-950 font-bold px-3 py-1.5 rounded-xl">Guardar</button>
+  <main class="max-w-xl mx-auto space-y-3">
+    <div class="grid grid-cols-3 gap-2">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-3">
+        <span class="text-[10px] text-slate-400 block">Saldo</span>
+        <b id="bal" class="text-sm text-white">R$ 0,00</b>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-3">
+        <span class="text-[10px] text-emerald-400 block">Entradas</span>
+        <b id="inc" class="text-sm text-emerald-400">R$ 0,00</b>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-3">
+        <span class="text-[10px] text-rose-400 block">Saídas</span>
+        <b id="exp" class="text-sm text-rose-400">R$ 0,00</b>
       </div>
     </div>
-  </div>
 
-  <!-- Modal Auth -->
-  <div id="auth-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-4 space-y-3">
-      <div class="flex justify-between items-center">
-        <h3 id="auth-modal-title" class="text-sm font-bold text-white">Entrar</h3>
-        <button onclick="closeAuthModal()" class="text-slate-400 text-xs">✕</button>
+    <div class="bg-slate-900 border border-slate-800 rounded-xl p-3">
+      <h2 class="text-xs font-bold text-slate-300 mb-2">Despesas por Categoria</h2>
+      <div class="h-36"><canvas id="chart"></canvas></div>
+    </div>
+
+    <div class="bg-slate-900 border border-slate-800 rounded-xl p-3">
+      <h2 class="text-xs font-bold text-slate-300 mb-2">Extrato Recente</h2>
+      <div id="list" class="space-y-1.5 max-h-44 overflow-y-auto"></div>
+    </div>
+
+    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col h-80">
+      <div class="p-2.5 bg-slate-950 border-b border-slate-800 flex justify-between items-center">
+        <span class="text-xs font-bold text-emerald-400">● Copiloto Financeiro</span>
+        <span id="mic-st" class="hidden text-[10px] text-rose-400 font-bold">🎤 Ouvindo...</span>
       </div>
-      <div class="flex border-b border-slate-800 text-xs">
-        <button id="tab-login" onclick="switchAuthTab('login')" class="flex-1 pb-1 text-emerald-400 border-b-2 border-emerald-500 font-bold">Entrar</button>
-        <button id="tab-signup" onclick="switchAuthTab('signup')" class="flex-1 pb-1 text-slate-400 font-bold">Criar Conta</button>
+      <div id="chat" class="flex-1 p-3 overflow-y-auto space-y-2 text-xs">
+        <div class="bg-slate-800 p-2.5 rounded-xl text-slate-200">
+          Toque nos botões abaixo ou digite: <b>"Gastei 45 no almoço"</b> ou <b>"Recebi 1200"</b>.
+        </div>
       </div>
-      <form onsubmit="handleAuthSubmit(event)" class="space-y-2">
-        <input id="auth-email" type="email" required placeholder="E-mail" class="w-full bg-slate-950 border border-slate-750 rounded-xl px-3 py-2 text-xs text-white">
-        <input id="auth-password" type="password" required minlength="6" placeholder="Palavra-passe (min 6)" class="w-full bg-slate-950 border border-slate-750 rounded-xl px-3 py-2 text-xs text-white">
-        <button id="auth-submit-btn" type="submit" class="w-full py-2 bg-emerald-500 text-slate-950 font-bold text-xs rounded-xl mt-1">Confirmar</button>
+      <div class="px-2 py-1.5 bg-slate-950 border-t border-slate-800 flex gap-1.5 overflow-x-auto text-[11px] whitespace-nowrap">
+        <button type="button" onclick="send('Gastei 45 no almoço')" class="bg-slate-800 border border-slate-700 px-2.5 py-1 rounded-lg">🍽️ +Gasto R$ 45</button>
+        <button type="button" onclick="send('Gastei 120 no mercado')" class="bg-slate-800 border border-slate-700 px-2.5 py-1 rounded-lg">🛒 +Mercado R$ 120</button>
+        <button type="button" onclick="send('Recebi 500 de freela')" class="bg-slate-800 border border-slate-700 px-2.5 py-1 rounded-lg">💰 +Receita R$ 500</button>
+        <button type="button" onclick="send('Qual meu saldo?')" class="bg-slate-800 border border-slate-700 px-2.5 py-1 rounded-lg">📊 Ver Saldo</button>
+      </div>
+      <form onsubmit="sub(event)" class="p-2 bg-slate-950 border-t border-slate-800 flex gap-1.5">
+        <button type="button" onclick="voice()" class="px-3 py-2 bg-slate-800 rounded-xl border border-slate-700">🎤</button>
+        <input id="msg" type="text" placeholder="Fale ou digite..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white">
+        <button type="submit" class="px-3 py-2 bg-emerald-500 text-slate-950 font-bold rounded-xl text-xs">Enviar</button>
       </form>
     </div>
-  </div>
-
-  <!-- Conteúdo Principal -->
-  <main class="max-w-7xl mx-auto w-full p-3 grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1">
-    
-    <!-- Painel Dashboard (7 cols) -->
-    <section class="lg:col-span-7 flex flex-col gap-3">
-      <div class="grid grid-cols-3 gap-2">
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3">
-          <span class="text-[10px] text-slate-400 block">Saldo</span>
-          <span id="total-balance" class="text-base font-bold text-white block mt-0.5">R$ 0,00</span>
-        </div>
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3">
-          <span class="text-[10px] text-emerald-400 block">Entradas</span>
-          <span id="total-income" class="text-sm font-bold text-emerald-400 block mt-0.5">R$ 0,00</span>
-        </div>
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3">
-          <span class="text-[10px] text-rose-400 block">Saídas</span>
-          <span id="total-expense" class="text-sm font-bold text-rose-400 block mt-0.5">R$ 0,00</span>
-        </div>
-      </div>
-
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-3">
-        <h2 class="text-xs font-semibold text-slate-300 mb-2">Despesas por Categoria</h2>
-        <div class="h-40 flex items-center justify-center">
-          <canvas id="expensesChart"></canvas>
-        </div>
-      </div>
-
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 flex-1 flex flex-col">
-        <div class="flex justify-between items-center mb-2">
-          <h2 class="text-xs font-semibold text-slate-300">Extrato Recente</h2>
-          <button onclick="clearAllTransactions()" class="text-[10px] text-slate-500 hover:text-rose-400">Limpar</button>
-        </div>
-        <div id="transactions-list" class="space-y-1.5 overflow-y-auto max-h-48 pr-1 flex-1"></div>
-      </div>
-    </section>
-
-    <!-- Painel Chat / Copiloto (5 cols) -->
-    <section class="lg:col-span-5 flex flex-col bg-slate-900 border border-slate-800 rounded-xl overflow-hidden h-[420px] lg:h-auto">
-      <div class="p-3 border-b border-slate-800 bg-slate-950/60 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
-          <span class="text-xs font-bold text-white">Copiloto Financeiro</span>
-        </div>
-        <span id="mic-status" class="hidden text-[10px] text-rose-400 font-bold animate-pulse">● A Ouvir...</span>
-      </div>
-
-      <div id="chat-messages" class="flex-1 p-3 overflow-y-auto space-y-2 text-xs">
-        <div class="bg-slate-800 rounded-xl p-2.5 text-slate-200">
-          Olá! Escreva ou dite as suas despesas. Exemplo: <b>"Gastei 45 no almoço"</b> ou <b>"Recebi 1200"</b>.
-        </div>
-      </div>
-
-      <div class="p-2 border-t border-slate-800 bg-slate-950">
-        <form onsubmit="handleChatSubmit(event)" class="flex gap-1.5 items-center">
-          <button id="mic-btn" type="button" onclick="toggleSpeechRecognition()" class="p-2 bg-slate-800 hover:bg-slate-750 text-slate-300 rounded-xl border border-slate-700 text-xs">
-            🎤
-          </button>
-          <input id="chat-input" type="text" placeholder="Fale ou digite..." autocomplete="off" class="flex-1 bg-slate-900 border border-slate-750 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
-          <button type="submit" class="px-3 py-2 bg-emerald-500 text-slate-950 font-bold rounded-xl text-xs">
-            Enviar
-          </button>
-        </form>
-      </div>
-    </section>
   </main>
 
   <script>
-    let supabaseClient = null;
-    let currentUser = null;
-    let authMode = 'login';
-    let transactions = [];
-    let chartInstance = null;
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(r => r.forEach(sw => sw.unregister()));
+    }
 
-    const DEFAULT_DATA = [
-      { id: 1, description: 'Salário', amount: 3000, type: 'income', category: 'Renda', date: 'Hoje' },
-      { id: 2, description: 'Supermercado', amount: 250, type: 'expense', category: 'Mercado', date: 'Ontem' },
-      { id: 3, description: 'Combustível', amount: 100, type: 'expense', category: 'Transporte', date: '11/10' }
+    var sb = null, chart = null;
+    var txs = JSON.parse(localStorage.getItem('pierri_v3')) || [
+      { id: 1, desc: 'Salário', val: 3200, type: 'in', cat: 'Renda' },
+      { id: 2, desc: 'Supermercado', val: 420, type: 'out', cat: 'Mercado' },
+      { id: 3, desc: 'Combustível', val: 150, type: 'out', cat: 'Transporte' }
     ];
 
-    window.addEventListener('DOMContentLoaded', async () => {
-      initChart();
-      await setupSupabaseAndAuth();
-      initSpeech();
-      if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
-    });
+    function brl(v) { return 'R$ ' + Number(v || 0).toFixed(2).replace('.', ','); }
 
-    async function setupSupabaseAndAuth() {
-      const url = localStorage.getItem('pierri_sb_url');
-      const key = localStorage.getItem('pierri_sb_key');
-      if (url && key) {
-        try {
-          supabaseClient = window.supabase.createClient(url, key);
-          supabaseClient.auth.onAuthStateChange(async (e, session) => {
-            currentUser = session?.user || null;
-            updateAuthUI();
-            await loadTransactions();
-          });
-          const { data: { session } } = await supabaseClient.auth.getSession();
-          currentUser = session?.user || null;
-        } catch (err) {}
-      }
-      updateAuthUI();
-      await loadTransactions();
-    }
+    function render() {
+      localStorage.setItem('pierri_v3', JSON.stringify(txs));
+      var inc = 0, exp = 0, cats = {};
+      txs.forEach(function(t) {
+        if (t.type === 'in') inc += Number(t.val);
+        else { exp += Number(t.val); cats[t.cat] = (cats[t.cat] || 0) + Number(t.val); }
+      });
+      document.getElementById('bal').textContent = brl(inc - exp);
+      document.getElementById('inc').textContent = brl(inc);
+      document.getElementById('exp').textContent = brl(exp);
 
-    function updateAuthUI() {
-      const badge = document.getElementById('auth-status-badge');
-      const email = document.getElementById('user-display-email');
-      const btn = document.getElementById('auth-main-btn');
-      if (currentUser) {
-        badge.textContent = 'Nuvem';
-        badge.className = 'text-[9px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded-full';
-        email.textContent = currentUser.email;
-        btn.textContent = 'Sair';
-        btn.onclick = async () => {
-          if (supabaseClient) await supabaseClient.auth.signOut();
-          currentUser = null;
-          updateAuthUI();
-          await loadTransactions();
-        };
-      } else {
-        badge.textContent = 'Local';
-        badge.className = 'text-[9px] bg-slate-800 text-slate-400 border border-slate-700 px-1.5 py-0.5 rounded-full';
-        email.textContent = 'Modo Local';
-        btn.textContent = 'Entrar';
-        btn.onclick = openAuthModal;
-      }
-    }
+      document.getElementById('list').innerHTML = txs.slice().reverse().map(function(t) {
+        return '<div class="flex justify-between items-center p-2 bg-slate-950 rounded-lg border border-slate-800 text-xs">' +
+          '<div><b>' + t.desc + '</b> <span class="text-[10px] text-slate-400">(' + t.cat + ')</span></div>' +
+          '<div class="flex items-center gap-2"><b class="' + (t.type === 'in' ? 'text-emerald-400' : 'text-rose-400') + '">' +
+          (t.type === 'in' ? '+' : '-') + brl(t.val) + '</b>' +
+          '<button onclick="delTx(' + t.id + ')" class="text-slate-400 px-1">✕</button></div></div>';
+      }).join('') || '<p class="text-xs text-slate-500 text-center py-3">Sem lançamentos</p>';
 
-    function toggleConfigModal() {
-      document.getElementById('config-modal').classList.toggle('hidden');
-      document.getElementById('input-supabase-url').value = localStorage.getItem('pierri_sb_url') || '';
-      document.getElementById('input-supabase-key').value = localStorage.getItem('pierri_sb_key') || '';
-    }
-
-    function saveSupabaseConfig() {
-      const url = document.getElementById('input-supabase-url').value.trim();
-      const key = document.getElementById('input-supabase-key').value.trim();
-      if (url && key) {
-        localStorage.setItem('pierri_sb_url', url);
-        localStorage.setItem('pierri_sb_key', key);
-      }
-      toggleConfigModal();
-      location.reload();
-    }
-
-    function openAuthModal() {
-      if (!supabaseClient) {
-        alert('Configure o URL e Chave do Supabase primeiro em Config.');
-        toggleConfigModal();
-        return;
-      }
-      document.getElementById('auth-modal').classList.remove('hidden');
-    }
-
-    function closeAuthModal() { document.getElementById('auth-modal').classList.add('hidden'); }
-
-    function switchAuthTab(mode) {
-      authMode = mode;
-      document.getElementById('tab-login').className = mode === 'login' ? 'flex-1 pb-1 text-emerald-400 border-b-2 border-emerald-500 font-bold' : 'flex-1 pb-1 text-slate-400 font-bold';
-      document.getElementById('tab-signup').className = mode === 'signup' ? 'flex-1 pb-1 text-emerald-400 border-b-2 border-emerald-500 font-bold' : 'flex-1 pb-1 text-slate-400 font-bold';
-      document.getElementById('auth-modal-title').textContent = mode === 'login' ? 'Entrar' : 'Criar Conta';
-    }
-
-    async function handleAuthSubmit(e) {
-      e.preventDefault();
-      const email = document.getElementById('auth-email').value.trim();
-      const password = document.getElementById('auth-password').value;
-      const btn = document.getElementById('auth-submit-btn');
-      btn.disabled = true;
       try {
-        if (authMode === 'login') {
-          const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-          if (error) throw error;
-          closeAuthModal();
-        } else {
-          const { error } = await supabaseClient.auth.signUp({ email, password });
-          if (error) throw error;
-          alert('Conta criada com sucesso!');
-          closeAuthModal();
+        if (window.Chart) {
+          if (chart) chart.destroy();
+          var k = Object.keys(cats);
+          chart = new Chart(document.getElementById('chart'), {
+            type: 'doughnut',
+            data: { labels: k.length ? k : ['Sem gastos'], datasets: [{ data: k.length ? Object.values(cats) : [1], backgroundColor: ['#10b981','#f43f5e','#3b82f6','#f59e0b','#8b5cf6'], borderWidth: 0 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#94a3b8', boxWidth: 10, font: { size: 10 } } } }, cutout: '65%' }
+          });
         }
-      } catch (err) { alert(err.message); }
-      btn.disabled = false;
+      } catch (e) {}
     }
 
-    async function loadTransactions() {
-      if (supabaseClient && currentUser) {
-        try {
-          const { data } = await supabaseClient.from('transactions').select('*').order('id', { ascending: true });
-          transactions = data || [];
-        } catch { transactions = []; }
-      } else {
-        transactions = JSON.parse(localStorage.getItem('pierri_tx')) || DEFAULT_DATA;
-      }
-      updateDashboard();
-      updateChart();
+    function delTx(id) { txs = txs.filter(function(t) { return t.id !== id; }); render(); }
+    function clearTx() { if (confirm('Limpar extrato?')) { txs = []; render(); } }
+
+    function addMsg(txt, u) {
+      var c = document.getElementById('chat');
+      c.innerHTML += '<div class="' + (u ? 'bg-emerald-600 text-white ml-auto' : 'bg-slate-800 text-slate-200 mr-auto') + ' p-2 rounded-xl max-w-[85%]">' + txt + '</div>';
+      c.scrollTop = c.scrollHeight;
     }
 
-    async function addTransaction(tx) {
-      if (supabaseClient && currentUser) {
-        try {
-          const { data, error } = await supabaseClient.from('transactions').insert([{
-            description: tx.description,
-            amount: tx.amount,
-            type: tx.type,
-            category: tx.category,
-            date: 'Hoje'
-          }]).select();
-          if (!error && data) transactions.push(data[0]);
-          else transactions.push({ ...tx, id: Date.now() });
-        } catch { transactions.push({ ...tx, id: Date.now() }); }
-      } else {
-        transactions.push({ ...tx, id: Date.now() });
-        localStorage.setItem('pierri_tx', JSON.stringify(transactions));
-      }
-      updateDashboard();
-      updateChart();
+    function send(txt) {
+      addMsg(txt, true);
+      if (/saldo|quanto/i.test(txt)) return addMsg('📊 Saldo atual: <b>' + document.getElementById('bal').textContent + '</b>', false);
+      var m = txt.match(/(\d+(?:[.,]\d{1,2})?)/);
+      if (!m) return addMsg('Digite um número. Ex: "Gastei 45 no almoço"', false);
+      var val = parseFloat(m[1].replace(',', '.'));
+      var isIn = /recebi|ganhei|sal[aá]rio|freela|pix/i.test(txt);
+      var cat = isIn ? 'Renda' : (/almo[cç]o|jantar|lanche|caf[eé]|comida|ifood/i.test(txt) ? 'Alimentação' : (/mercado|compras/i.test(txt) ? 'Mercado' : (/gasolina|uber|posto/i.test(txt) ? 'Transporte' : 'Geral')));
+      txs.push({ id: Date.now(), desc: cat, val: val, type: isIn ? 'in' : 'out', cat: cat });
+      render();
+      addMsg('✓ Lançado: <b>' + cat + '</b> — <b>' + brl(val) + '</b>', false);
     }
 
-    function deleteTransaction(id) {
-      if (confirm('Eliminar lançamento?')) {
-        if (supabaseClient && currentUser) supabaseClient.from('transactions').delete().eq('id', id).then();
-        transactions = transactions.filter(t => t.id !== id);
-        if (!currentUser) localStorage.setItem('pierri_tx', JSON.stringify(transactions));
-        updateDashboard();
-        updateChart();
-      }
-    }
-
-    function clearAllTransactions() {
-      if (confirm('Limpar todas as transações?')) {
-        if (supabaseClient && currentUser) supabaseClient.from('transactions').delete().neq('id', 0).then();
-        transactions = [];
-        localStorage.removeItem('pierri_tx');
-        updateDashboard();
-        updateChart();
-      }
-    }
-
-    function formatBRL(v) {
-      return (Number(v) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    }
-
-    function updateDashboard() {
-      const inc = transactions.filter(t => t.type === 'income').reduce((a, t) => a + Number(t.amount), 0);
-      const exp = transactions.filter(t => t.type === 'expense').reduce((a, t) => a + Number(t.amount), 0);
-      document.getElementById('total-balance').textContent = formatBRL(inc - exp);
-      document.getElementById('total-income').textContent = formatBRL(inc);
-      document.getElementById('total-expense').textContent = formatBRL(exp);
-
-      const list = document.getElementById('transactions-list');
-      list.innerHTML = '';
-      if (!transactions.length) {
-        list.innerHTML = '<p class="text-center text-[10px] text-slate-500 py-4">Sem registos.</p>';
-        return;
-      }
-      transactions.slice().reverse().forEach(t => {
-        const item = document.createElement('div');
-        item.className = 'flex items-center justify-between p-2 rounded-lg bg-slate-950 border border-slate-800 text-xs';
-        item.innerHTML = `
-          <div>
-            <p class="font-bold text-white">${t.description}</p>
-            <p class="text-[10px] text-slate-400">${t.category} • ${t.date || 'Hoje'}</p>
-          </div>
-          <div class="flex items-center gap-2">
-            <span class="font-bold ${t.type === 'income' ? 'text-emerald-400' : 'text-rose-400'}">
-              ${t.type === 'income' ? '+' : '-'} ${formatBRL(t.amount)}
-            </span>
-            <button onclick="deleteTransaction(${t.id})" class="text-slate-500 hover:text-rose-400">✕</button>
-          </div>
-        `;
-        list.appendChild(item);
-      });
-    }
-
-    function initChart() {
-      const ctx = document.getElementById('expensesChart').getContext('2d');
-      const dataMap = getCategoryData();
-      chartInstance = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels: Object.keys(dataMap),
-          datasets: [{ data: Object.values(dataMap), backgroundColor: ['#10b981', '#f43f5e', '#3b82f6', '#f59e0b', '#8b5cf6'], borderWidth: 0 }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { position: 'right', labels: { boxWidth: 8, color: '#94a3b8', font: { size: 9 } } } },
-          cutout: '70%'
-        }
-      });
-    }
-
-    function getCategoryData() {
-      const exp = transactions.filter(t => t.type === 'expense');
-      const g = {};
-      exp.forEach(t => { g[t.category] = (g[t.category] || 0) + Number(t.amount); });
-      return Object.keys(g).length ? g : { 'Sem gastos': 1 };
-    }
-
-    function updateChart() {
-      if (!chartInstance) return;
-      const d = getCategoryData();
-      chartInstance.data.labels = Object.keys(d);
-      chartInstance.data.datasets[0].data = Object.values(d);
-      chartInstance.update();
-    }
-
-    let recognition = null;
-    let isListening = false;
-    function initSpeech() {
-      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SR) return;
-      recognition = new SR();
-      recognition.lang = 'pt-BR';
-      recognition.onstart = () => {
-        isListening = true;
-        document.getElementById('mic-status').classList.remove('hidden');
-      };
-      recognition.onend = () => {
-        isListening = false;
-        document.getElementById('mic-status').classList.add('hidden');
-      };
-      recognition.onresult = (e) => {
-        const text = e.results[0][0].transcript;
-        if (text) handleUserMessage(text);
-      };
-    }
-
-    function toggleSpeechRecognition() {
-      if (!recognition) return alert('Navegador sem suporte a voz.');
-      if (isListening) recognition.stop();
-      else recognition.start();
-    }
-
-    function parseNLP(text) {
-      const match = text.match(/(\d+(?:[.,]\d{1,2})?)/);
-      if (!match) return null;
-      const amount = parseFloat(match[1].replace(',', '.'));
-      const isInc = /(ganhei|recebi|salario|salário|vendi|entrada|renda|freela)/i.test(text);
-      let cat = 'Geral';
-      if (/(almoço|jantar|lanche|restaurante|ifood|cafe|café|comida)/i.test(text)) cat = 'Alimentação';
-      else if (/(mercado|supermercado|feira)/i.test(text)) cat = 'Mercado';
-      else if (/(gasolina|uber|posto|transporte)/i.test(text)) cat = 'Transporte';
-      else if (isInc) cat = 'Renda';
-      return {
-        amount,
-        type: isInc ? 'income' : 'expense',
-        category: cat,
-        description: cat
-      };
-    }
-
-    async function handleUserMessage(text) {
-      appendChatMessage(text, 'user');
-      const parsed = parseNLP(text);
-      if (!parsed) {
-        appendChatMessage('Não identifiquei o valor. Diga algo como: "Gastei 45 no almoço".', 'bot');
-        return;
-      }
-      await addTransaction({ ...parsed, date: 'Hoje' });
-      appendChatMessage(`✓ Registado: ${parsed.category} - ${formatBRL(parsed.amount)}`, 'bot');
-    }
-
-    function handleChatSubmit(e) {
+    function sub(e) {
       e.preventDefault();
-      const input = document.getElementById('chat-input');
-      const val = input.value.trim();
-      if (!val) return;
-      input.value = '';
-      handleUserMessag
+      var i = document.getElementById('msg');
+      if (i.value.trim()) { send(i.value.trim()); i.value = ''; }
+    }
+
+    function voice() {
+      var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) return alert('Navegador sem suporte a voz.');
+      var r = new SR();
+      r.lang = 'pt-BR';
+      r.onstart = function() { document.getElementById('mic-st').classList.remove('hidden'); };
+      r.onend = function() { document.getElementById('mic-st').classList.add('hidden'); };
+      r.onresult = function(e) { send(e.results[0][0].transcript); };
+      r.start();
+    }
+
+    function configSB() {
+      var u = prompt('URL do Supabase:', localStorage.getItem('sb_u') || '');
+      if (u) localStorage.setItem('sb_u', u.trim());
+    }
+
+    render();
+  </script>
+</body>
+</html>
+
